@@ -1,4 +1,8 @@
 // АВТОРИЗАЦИЯ
+
+// Временное хранилище данных регистрации
+let registrationData = {};
+
 async function handleRegister(e) {
     e.preventDefault();
     
@@ -27,19 +31,27 @@ async function handleRegister(e) {
         return;
     }
 
+    // Сохраняем данные для последующего использования
+    registrationData = { name, username, email, password };
+
     const loader = document.getElementById('regLoader');
     const btn = e.target.querySelector('.btn-primary');
     loader.classList.remove('hidden');
     btn.style.pointerEvents = 'none';
 
     try {
-        const response = await fetch(`${API_URL}/auth/register/send-code`, {
+        console.log('📤 Отправка запроса на:', `${API_URL}/auth/send-code`);
+        
+        const response = await fetch(`${API_URL}/auth/send-code`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, username, email, password })
+            body: JSON.stringify({ email })
         });
 
+        console.log('📥 Ответ получен:', response.status);
+
         const data = await response.json();
+        console.log('📦 Данные:', data);
 
         if (response.ok) {
             document.getElementById('verifyEmail').textContent = email;
@@ -59,7 +71,8 @@ async function handleRegister(e) {
             showToast('❌ ' + (data.error || 'Ошибка регистрации'), 'error');
         }
     } catch (error) {
-        showToast('❌ Ошибка соединения с сервером', 'error');
+        console.error('❌ Ошибка соединения:', error);
+        showToast('❌ Ошибка соединения с сервером. Проверьте что сервер запущен!', 'error');
     } finally {
         loader.classList.add('hidden');
         btn.style.pointerEvents = 'auto';
@@ -83,13 +96,18 @@ async function handleLogin(e) {
     btn.style.pointerEvents = 'none';
 
     try {
+        console.log('📤 Отправка запроса на:', `${API_URL}/auth/login`);
+        
         const response = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ username: email, password })
         });
 
+        console.log('📥 Ответ получен:', response.status);
+
         const data = await response.json();
+        console.log('📦 Данные:', data);
 
         if (response.ok) {
             localStorage.setItem('vibechat_token', data.token);
@@ -97,12 +115,17 @@ async function handleLogin(e) {
             currentUser = data.user;
             
             showToast('✅ Вход выполнен!', 'success');
+            
+            // Закрываем модальное окно
+            document.getElementById('loginModal').classList.remove('active');
+            
             setTimeout(() => showApp(), 1000);
         } else {
             showToast('❌ ' + (data.error || 'Ошибка входа'), 'error');
         }
     } catch (error) {
-        showToast('❌ Ошибка соединения с сервером', 'error');
+        console.error('❌ Ошибка соединения:', error);
+        showToast('❌ Ошибка соединения с сервером. Проверьте что сервер запущен!', 'error');
     } finally {
         loader.classList.add('hidden');
         btn.style.pointerEvents = 'auto';
@@ -122,25 +145,60 @@ async function verifyCode() {
     loader.classList.remove('hidden');
 
     try {
-        const response = await fetch(`${API_URL}/auth/register/verify`, {
+        console.log('📤 Проверка кода...');
+        
+        // Шаг 1: Проверка кода
+        const verifyResponse = await fetch(`${API_URL}/auth/register/verify`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, code })
         });
 
-        const data = await response.json();
+        const verifyData = await verifyResponse.json();
+        console.log('📥 Результат проверки:', verifyData);
 
-        if (response.ok) {
-            localStorage.setItem('vibechat_token', data.token);
-            localStorage.setItem('vibechat_user', JSON.stringify(data.user));
-            currentUser = data.user;
+        if (!verifyResponse.ok) {
+            showToast('❌ ' + (verifyData.error || 'Неверный код'), 'error');
+            loader.classList.add('hidden');
+            return;
+        }
+
+        console.log('✅ Код верный! Завершаем регистрацию...');
+
+        // Шаг 2: Завершение регистрации
+        const completeResponse = await fetch(`${API_URL}/auth/register/complete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: registrationData.email,
+                name: registrationData.name,
+                username: registrationData.username,
+                password: registrationData.password
+            })
+        });
+
+        const completeData = await completeResponse.json();
+        console.log('📥 Результат регистрации:', completeData);
+
+        if (completeResponse.ok) {
+            localStorage.setItem('vibechat_token', completeData.token);
+            localStorage.setItem('vibechat_user', JSON.stringify(completeData.user));
+            currentUser = completeData.user;
             
             showToast('✅ Регистрация успешна!', 'success');
+            
+            // Закрываем модальное окно
+            document.getElementById('verifyModal').classList.remove('active');
+            
+            // Очищаем временные данные
+            registrationData = {};
+            
             setTimeout(() => showApp(), 1000);
         } else {
-            showToast('❌ ' + (data.error || 'Неверный код'), 'error');
+            showToast('❌ ' + (completeData.error || 'Ошибка завершения регистрации'), 'error');
         }
     } catch (error) {
+        console.error('❌ Ошибка соединения:', error);
         showToast('❌ Ошибка соединения с сервером', 'error');
     } finally {
         loader.classList.add('hidden');
@@ -156,5 +214,46 @@ function showRegister() {
     document.getElementById('loginModal').classList.remove('active');
     document.getElementById('registerModal').classList.add('active');
 }
+
+// Автоматический переход между полями кода
+document.addEventListener('DOMContentLoaded', () => {
+    const codeInputs = document.querySelectorAll('.code-input');
+    
+    codeInputs.forEach((input, index) => {
+        // Автоматический переход к следующему полю
+        input.addEventListener('input', (e) => {
+            if (e.target.value.length === 1 && index < codeInputs.length - 1) {
+                codeInputs[index + 1].focus();
+            }
+        });
+
+        // Возврат к предыдущему полю при Backspace
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                codeInputs[index - 1].focus();
+            }
+        });
+
+        // Разрешаем только цифры
+        input.addEventListener('keypress', (e) => {
+            if (!/[0-9]/.test(e.key)) {
+                e.preventDefault();
+            }
+        });
+
+        // Автоматическая отправка при заполнении последнего поля
+        if (index === codeInputs.length - 1) {
+            input.addEventListener('input', (e) => {
+                if (e.target.value.length === 1) {
+                    // Проверяем что все поля заполнены
+                    const allFilled = Array.from(codeInputs).every(inp => inp.value.length === 1);
+                    if (allFilled) {
+                        setTimeout(() => verifyCode(), 300);
+                    }
+                }
+            });
+        }
+    });
+});
 
 console.log('✅ auth.js загружен');
