@@ -1,1 +1,38 @@
-
+[
+  {
+    "id": "1759850252418rikww3a6w",
+    "user1": "1759850243958tyknlwuno",
+    "user2": "1759844151505rrslsxh0r",
+    "createdAt": 1759850252418,
+    "lastMessage": "вв",
+    "lastMessageTime": 1759853232414,
+    "unreadCount": {
+      "1759850243958tyknlwuno": 2,
+      "1759844151505rrslsxh0r": 0
+    }
+  },
+  {
+    "id": "1759853467001zl26wq19m",
+    "user1": "17598534355963o1a60mrl",
+    "user2": "1759850243958tyknlwuno",
+    "createdAt": 1759853467001,
+    "lastMessage": "dd",
+    "lastMessageTime": 1759853495514,
+    "unreadCount": {
+      "17598534355963o1a60mrl": 0,
+      "1759850243958tyknlwuno": 2
+    }
+  },
+  {
+    "id": "1759853482810lpehk3snh",
+    "user1": "17598534355963o1a60mrl",
+    "user2": "1759844151505rrslsxh0r",
+    "createdAt": 1759853482810,
+    "lastMessage": "ddd",
+    "lastMessageTime": 1759853493474,
+    "unreadCount": {
+      "17598534355963o1a60mrl": 0,
+      "1759844151505rrslsxh0r": 1
+    }
+  }
+]
