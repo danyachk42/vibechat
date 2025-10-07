@@ -19,6 +19,112 @@
         <div class="particle"></div>
     </div>
 
+    <!-- 🌟 НАЧАЛЬНЫЙ ПРИВЕТСТВЕННЫЙ ЭКРАН (LANDING) -->
+<div id="landingScreen" class="landing-screen active">
+    <!-- Анимированный фон -->
+    <div class="landing-bg">
+        <div class="gradient-sphere sphere-1"></div>
+        <div class="gradient-sphere sphere-2"></div>
+        <div class="gradient-sphere sphere-3"></div>
+        <div class="gradient-sphere sphere-4"></div>
+        <canvas id="landingParticles"></canvas>
+    </div>
+    
+    <!-- Контент -->
+    <div class="landing-content">
+        <!-- Анимированный логотип -->
+        <div class="landing-logo">
+            <div class="logo-main">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <div class="logo-glow"></div>
+            <div class="logo-orbit">
+                <div class="orbit-dot dot-1"></div>
+                <div class="orbit-dot dot-2"></div>
+                <div class="orbit-dot dot-3"></div>
+            </div>
+        </div>
+        
+        <!-- Заголовок -->
+        <div class="landing-header">
+            <h1 class="landing-title">
+                <span class="title-line">
+                    <span class="letter" style="--i: 0">V</span>
+                    <span class="letter" style="--i: 1">i</span>
+                    <span class="letter" style="--i: 2">b</span>
+                    <span class="letter" style="--i: 3">e</span>
+                    <span class="letter" style="--i: 4">C</span>
+                    <span class="letter" style="--i: 5">h</span>
+                    <span class="letter" style="--i: 6">a</span>
+                    <span class="letter" style="--i: 7">t</span>
+                </span>
+            </h1>
+            <p class="landing-subtitle">
+                <span class="subtitle-word" style="--delay: 0.8s">Будущее</span>
+                <span class="subtitle-word" style="--delay: 1s">общения</span>
+                <span class="subtitle-word" style="--delay: 1.2s">начинается</span>
+                <span class="subtitle-word" style="--delay: 1.4s">здесь</span>
+            </p>
+        </div>
+        
+        <!-- Фичи -->
+        <div class="landing-features">
+            <div class="feature-card" style="--delay: 1.6s">
+                <div class="feature-icon-wrapper">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3>Молниеносно</h3>
+                <p>Мгновенная доставка сообщений</p>
+            </div>
+            <div class="feature-card" style="--delay: 1.8s">
+                <div class="feature-icon-wrapper">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>Безопасно</h3>
+                <p>Шифрование end-to-end</p>
+            </div>
+            <div class="feature-card" style="--delay: 2s">
+                <div class="feature-icon-wrapper">
+                    <i class="fas fa-palette"></i>
+                </div>
+                <h3>Стильно</h3>
+                <p>Современный дизайн</p>
+            </div>
+        </div>
+        
+        <!-- Кнопки действий -->
+        <div class="landing-actions">
+            <button class="landing-btn btn-primary" onclick="showRegisterFromLanding()">
+                <span class="btn-text">Начать общение</span>
+                <span class="btn-icon"><i class="fas fa-arrow-right"></i></span>
+                <div class="btn-shine"></div>
+            </button>
+            <button class="landing-btn btn-secondary" onclick="showLoginFromLanding()">
+                <span class="btn-text">Уже есть аккаунт</span>
+                <span class="btn-icon"><i class="fas fa-sign-in-alt"></i></span>
+            </button>
+        </div>
+        
+        <!-- Декоративные элементы -->
+        <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+            <div class="shape shape-4"></div>
+            <div class="shape shape-5"></div>
+        </div>
+    </div>
+    
+    <!-- Волны внизу -->
+    <div class="landing-waves">
+        <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" class="wave-path"></path>
+            <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" class="wave-path"></path>
+            <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" class="wave-path"></path>
+        </svg>
+    </div>
+</div>
+    
     <!-- ============================================
          МОДАЛЬНЫЕ ОКНА АВТОРИЗАЦИИ
     ============================================ -->
@@ -638,3 +744,4 @@
 </body>
 
 </html>
+
