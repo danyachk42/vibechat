@@ -1,1 +1,11 @@
-
+services:
+  - type: web
+    name: vibechat
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        value: vibechat_secret_key_2025_ultra_secure
