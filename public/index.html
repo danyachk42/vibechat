@@ -556,6 +556,77 @@
     <!-- Уведомления -->
     <div id="toast" class="toast"></div>
 
+<!-- ✨ ПРИВЕТСТВЕННЫЙ ЭКРАН -->
+<div id="welcomeScreen" class="welcome-screen">
+    <!-- Анимированный фон с частицами -->
+    <div class="welcome-bg">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+        <canvas id="particlesCanvas"></canvas>
+    </div>
+    
+    <!-- Контент -->
+    <div class="welcome-content">
+        <!-- Анимированный логотип -->
+        <div class="welcome-logo">
+            <div class="logo-circle">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <div class="logo-rings">
+                <div class="ring ring-1"></div>
+                <div class="ring ring-2"></div>
+                <div class="ring ring-3"></div>
+            </div>
+        </div>
+        
+        <!-- Приветственный текст -->
+        <div class="welcome-text">
+            <h1 class="welcome-title">
+                <span class="word">Добро</span>
+                <span class="word">пожаловать</span>
+                <span class="word">в</span>
+                <span class="word">VibeChat!</span>
+            </h1>
+            <p class="welcome-subtitle">
+                <span class="char">Г</span><span class="char">о</span><span class="char">т</span><span class="char">о</span><span class="char">в</span><span class="char">ы</span>
+                <span class="char"> </span>
+                <span class="char">к</span>
+                <span class="char"> </span>
+                <span class="char">о</span><span class="char">б</span><span class="char">щ</span><span class="char">е</span><span class="char">н</span><span class="char">и</span><span class="char">ю</span><span class="char">?</span>
+            </p>
+        </div>
+        
+        <!-- Анимированные иконки -->
+        <div class="welcome-features">
+            <div class="feature-icon" style="--delay: 0s">
+                <i class="fas fa-comments"></i>
+                <span>Чаты</span>
+            </div>
+            <div class="feature-icon" style="--delay: 0.1s">
+                <i class="fas fa-users"></i>
+                <span>Группы</span>
+            </div>
+            <div class="feature-icon" style="--delay: 0.2s">
+                <i class="fas fa-image"></i>
+                <span>Медиа</span>
+            </div>
+            <div class="feature-icon" style="--delay: 0.3s">
+                <i class="fas fa-bolt"></i>
+                <span>Быстро</span>
+            </div>
+        </div>
+        
+        <!-- Прогресс бар -->
+        <div class="welcome-progress">
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <p class="progress-text">Загрузка вашего мира общения...</p>
+        </div>
+    </div>
+</div>
+    
     <!-- Подключение JavaScript МОДУЛЕЙ -->
     <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
@@ -565,4 +636,5 @@
     <script src="js/groups.js"></script>
     <script src="js/app.js"></script>
 </body>
+
 </html>
