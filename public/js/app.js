@@ -42,6 +42,7 @@ async function handleRegister(e) {
     try {
         console.log('📤 Отправка запроса на регистрацию...');
         
+        // ✅ ИСПРАВЛЕНО: Отправляем ВСЕ данные
         const response = await fetch(`${API_URL}/auth/register/send-code`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -103,10 +104,11 @@ async function handleLogin(e) {
     try {
         console.log('📤 Отправка запроса на вход...');
         
+        // ✅ ИСПРАВЛЕНО: Отправляем email, а не username
         const response = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }) // ✅ ИСПРАВЛЕНО: было username: email
+            body: JSON.stringify({ email, password })
         });
 
         console.log('📥 Ответ получен:', response.status);
@@ -115,7 +117,7 @@ async function handleLogin(e) {
         console.log('📦 Данные:', data);
 
         if (response.ok && data.token && data.user) {
-            // ✅ Сохраняем токен и пользователя
+            // Сохраняем токен и пользователя
             localStorage.setItem('vibechat_token', data.token);
             localStorage.setItem('vibechat_user', JSON.stringify(data.user));
             currentUser = data.user;
@@ -160,6 +162,7 @@ async function verifyCode() {
         console.log('📤 Проверка кода и завершение регистрации...');
         
         // ✅ ИСПРАВЛЕНО: Один запрос вместо двух
+        // Сервер уже создает пользователя и возвращает токен в /verify
         const response = await fetch(`${API_URL}/auth/register/verify`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -170,7 +173,7 @@ async function verifyCode() {
         console.log('📥 Результат:', data);
 
         if (response.ok && data.token && data.user) {
-            // ✅ Сохраняем токен и пользователя
+            // Сохраняем токен и пользователя
             localStorage.setItem('vibechat_token', data.token);
             localStorage.setItem('vibechat_user', JSON.stringify(data.user));
             currentUser = data.user;
