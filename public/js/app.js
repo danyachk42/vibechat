@@ -130,10 +130,10 @@ async function handleLogin(e) {
             // Закрываем модальное окно
             document.getElementById('loginModal').classList.remove('active');
             
-            // Показываем приложение
+            // ✨ Показываем приветственный экран, затем приложение
             setTimeout(() => {
-                showApp();
-            }, 500);
+                showWelcomeScreen();
+            }, 300);
         } else {
             showToast('❌ ' + (data.error || 'Ошибка входа'), 'error');
         }
@@ -162,7 +162,6 @@ async function verifyCode() {
         console.log('📤 Проверка кода и завершение регистрации...');
         
         // ✅ ИСПРАВЛЕНО: Один запрос вместо двух
-        // Сервер уже создает пользователя и возвращает токен в /verify
         const response = await fetch(`${API_URL}/auth/register/verify`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -189,10 +188,10 @@ async function verifyCode() {
             // Очищаем временные данные
             registrationData = {};
             
-            // Показываем приложение
+            // ✨ Показываем приветственный экран, затем приложение
             setTimeout(() => {
-                showApp();
-            }, 500);
+                showWelcomeScreen();
+            }, 300);
         } else {
             showToast('❌ ' + (data.error || 'Неверный код или ошибка регистрации'), 'error');
         }
@@ -244,7 +243,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (index === codeInputs.length - 1) {
             input.addEventListener('input', (e) => {
                 if (e.target.value.length === 1) {
-                    // Проверяем что все поля заполнены
                     const allFilled = Array.from(codeInputs).every(inp => inp.value.length === 1);
                     if (allFilled) {
                         setTimeout(() => verifyCode(), 300);
