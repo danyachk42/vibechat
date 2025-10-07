@@ -30,20 +30,33 @@ const emojis = {
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Приложение загружено');
     checkAuth();
     initializeEmojiPicker();
 });
 
 // Проверка авторизации
 async function checkAuth() {
-    const token = localStorage.getItem('token');
+    console.log('🔍 Проверка авторизации...');
     
-    if (!token) {
+    // ИСПРАВЛЕНО: используем vibechat_token
+    const token = localStorage.getItem('vibechat_token');
+    const userStr = localStorage.getItem('vibechat_user');
+    
+    console.log('📦 Токен:', token ? 'Найден' : 'Не найден');
+    console.log('👤 Пользователь:', userStr ? 'Найден' : 'Не найден');
+    
+    if (!token || !userStr) {
+        console.log('❌ Нет токена или пользователя - показываем экран авторизации');
         showAuthScreen();
         return;
     }
 
     try {
+        currentUser = JSON.parse(userStr);
+        console.log('✅ Пользователь загружен из localStorage:', currentUser);
+        
+        // Проверяем токен на сервере
         const response = await fetch(`${API_URL}/auth/profile`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -51,10 +64,14 @@ async function checkAuth() {
         });
 
         if (response.ok) {
-            currentUser = await response.json();
-            initializeApp();
+            const serverUser = await response.json();
+            currentUser = serverUser;
+            console.log('✅ Токен валиден, пользователь подтвержден');
+            showApp();
         } else {
-            localStorage.removeItem('token');
+            console.log('❌ Токен невалиден');
+            localStorage.removeItem('vibechat_token');
+            localStorage.removeItem('vibechat_user');
             showAuthScreen();
         }
     } catch (error) {
@@ -65,16 +82,31 @@ async function checkAuth() {
 
 // Показать экран авторизации
 function showAuthScreen() {
+    console.log('📱 Показываем экран авторизации');
     document.getElementById('authScreen').style.display = 'flex';
     document.getElementById('appScreen').style.display = 'none';
 }
 
-// Инициализация приложения
-function initializeApp() {
+// Показать приложение
+function showApp() {
+    console.log('📱 Показываем приложение');
     document.getElementById('authScreen').style.display = 'none';
     document.getElementById('appScreen').style.display = 'flex';
     
     // Инициализация Socket.io
+    initializeSocket();
+    
+    // Загрузка чатов
+    loadChats();
+    
+    // Обновление профиля
+    updateProfileUI();
+}
+
+// Инициализация Socket.io
+function initializeSocket() {
+    console.log('🔌 Инициализация Socket.io...');
+    
     socket = io(SOCKET_URL, {
         transports: ['websocket', 'polling'],
         reconnection: true,
@@ -84,46 +116,63 @@ function initializeApp() {
 
     socket.on('connect', () => {
         console.log('✅ Socket подключен');
-        socket.emit('user:online', currentUser.id);
+        if (currentUser) {
+            socket.emit('user:online', currentUser.id);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        console.log('❌ Socket отключен');
     });
 
     socket.on('message:new', (message) => {
+        console.log('📨 Новое сообщение:', message);
         handleNewMessage(message);
     });
 
     socket.on('user:status', (data) => {
+        console.log('👤 Статус пользователя:', data);
         updateUserStatus(data);
     });
-
-    // Загрузка чатов
-    loadChats();
-    
-    // Обновление профиля
-    updateProfileUI();
 }
 
 // Обновление UI профиля
 function updateProfileUI() {
-    document.getElementById('currentUserName').textContent = currentUser.name;
-    document.getElementById('currentUserUsername').textContent = `@${currentUser.username}`;
+    if (!currentUser) return;
     
-    if (currentUser.avatar) {
-        document.getElementById('currentUserAvatar').src = currentUser.avatar;
+    console.log('🎨 Обновление UI профиля');
+    
+    const nameEl = document.getElementById('currentUserName');
+    const usernameEl = document.getElementById('currentUserUsername');
+    const avatarEl = document.getElementById('currentUserAvatar');
+    
+    if (nameEl) nameEl.textContent = currentUser.name;
+    if (usernameEl) usernameEl.textContent = `@${currentUser.username}`;
+    
+    if (avatarEl && currentUser.avatar) {
+        avatarEl.src = currentUser.avatar;
     }
 }
 
 // Загрузка чатов
 async function loadChats() {
+    if (!currentUser) return;
+    
+    console.log('📥 Загрузка чатов...');
+    
     try {
         const response = await fetch(`${API_URL}/chats/${currentUser.id}`, {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('vibechat_token')}`
             }
         });
 
         if (response.ok) {
             chats = await response.json();
+            console.log('✅ Чаты загружены:', chats.length);
             renderChats();
+        } else {
+            console.log('❌ Ошибка загрузки чатов:', response.status);
         }
     } catch (error) {
         console.error('❌ Ошибка загрузки чатов:', error);
@@ -133,6 +182,8 @@ async function loadChats() {
 // Рендер чатов
 function renderChats() {
     const chatsList = document.getElementById('chatsList');
+    if (!chatsList) return;
+    
     chatsList.innerHTML = '';
 
     if (chats.length === 0) {
@@ -152,7 +203,6 @@ function createChatElement(chat) {
     div.className = 'chat-item';
     div.onclick = () => openChat(chat.id);
     
-    // Здесь добавьте HTML для отображения чата
     div.innerHTML = `
         <div class="chat-avatar"></div>
         <div class="chat-info">
@@ -166,15 +216,16 @@ function createChatElement(chat) {
 
 // Открыть чат
 async function openChat(chatId) {
+    console.log('💬 Открытие чата:', chatId);
+    
     currentChat = chats.find(c => c.id === chatId);
     
     if (!currentChat) return;
 
-    // Загрузка сообщений
     try {
         const response = await fetch(`${API_URL}/messages/${chatId}`, {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('vibechat_token')}`
             }
         });
 
@@ -190,6 +241,8 @@ async function openChat(chatId) {
 // Рендер сообщений
 function renderMessages(messages) {
     const messagesContainer = document.getElementById('messagesContainer');
+    if (!messagesContainer) return;
+    
     messagesContainer.innerHTML = '';
 
     messages.forEach(message => {
@@ -216,9 +269,13 @@ function createMessageElement(message) {
 // Отправка сообщения
 function sendMessage() {
     const input = document.getElementById('messageInput');
+    if (!input) return;
+    
     const text = input.value.trim();
 
-    if (!text || !currentChat) return;
+    if (!text || !currentChat || !socket) return;
+
+    console.log('📤 Отправка сообщения:', text);
 
     socket.emit('message:send', {
         chatId: currentChat.id,
@@ -234,8 +291,11 @@ function sendMessage() {
 function handleNewMessage(message) {
     if (currentChat && message.chatId === currentChat.id) {
         const messageElement = createMessageElement(message);
-        document.getElementById('messagesContainer').appendChild(messageElement);
-        document.getElementById('messagesContainer').scrollTop = document.getElementById('messagesContainer').scrollHeight;
+        const container = document.getElementById('messagesContainer');
+        if (container) {
+            container.appendChild(messageElement);
+            container.scrollTop = container.scrollHeight;
+        }
     }
 
     // Обновление списка чатов
@@ -244,27 +304,33 @@ function handleNewMessage(message) {
 
 // Обновление статуса пользователя
 function updateUserStatus(data) {
-    // Обновите UI статуса пользователя
-    console.log('Статус пользователя обновлен:', data);
+    console.log('👤 Статус пользователя обновлен:', data);
 }
 
 // Выход
 function logout() {
-    localStorage.removeItem('token');
+    console.log('🚪 Выход из системы');
+    
+    localStorage.removeItem('vibechat_token');
+    localStorage.removeItem('vibechat_user');
     currentUser = null;
+    
     if (socket) {
         socket.disconnect();
     }
+    
     showAuthScreen();
 }
 
 // Инициализация emoji picker
 function initializeEmojiPicker() {
-    // Добавьте логику для emoji picker
+    console.log('😊 Инициализация emoji picker');
 }
 
 // Toast уведомления
 function showToast(message, type = 'info') {
+    console.log(`📢 Toast [${type}]:`, message);
+    
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.textContent = message;
@@ -280,221 +346,5 @@ function showToast(message, type = 'info') {
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
-2. public/js/auth.js (ЗАМЕНИТЕ ПОЛНОСТЬЮ)
-// АВТОРИЗАЦИЯ
 
-async function handleRegister(e) {
-    e.preventDefault();
-
-    const name = document.getElementById('regName').value.trim();
-    const username = document.getElementById('regUsername').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    const password = document.getElementById('regPassword').value;
-
-    if (!name || name.length < 2) {
-        showToast('Имя должно быть минимум 2 символа', 'error');
-        return;
-    }
-
-    if (!username || username.length < 5) {
-        showToast('Username должен быть минимум 5 символов', 'error');
-        return;
-    }
-
-    if (!email || !email.includes('@')) {
-        showToast('Введите корректный email', 'error');
-        return;
-    }
-
-    if (!password || password.length < 6) {
-        showToast('Пароль должен быть минимум 6 символов', 'error');
-        return;
-    }
-
-    const loader = document.querySelector('#registerModal .loader');
-    const btn = document.querySelector('#registerModal button[type="submit"]');
-    
-    loader.classList.remove('hidden');
-    btn.style.pointerEvents = 'none';
-
-    try {
-        // Шаг 1: Отправка кода
-        const response = await fetch(`${API_URL}/auth/send-code`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, username, email, password })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            document.getElementById('verifyEmail').textContent = email;
-            document.getElementById('registerModal').classList.remove('active');
-            
-            setTimeout(() => {
-                document.getElementById('verifyModal').classList.add('active');
-                document.getElementById('code1').focus();
-            }, 300);
-
-            showToast('✅ Код отправлен! Проверьте консоль сервера', 'success');
-            
-            if (data.devCode) {
-                console.log('🔑 КОД:', data.devCode);
-            }
-        } else {
-            showToast('❌ ' + (data.error || 'Ошибка регистрации'), 'error');
-        }
-    } catch (error) {
-        console.error('❌ Ошибка соединения:', error);
-        showToast('❌ Ошибка соединения с сервером. Проверьте, что сервер запущен!', 'error');
-    } finally {
-        loader.classList.add('hidden');
-        btn.style.pointerEvents = 'auto';
-    }
-}
-
-// Проверка кода
-async function handleVerifyCode(e) {
-    e.preventDefault();
-
-    const code1 = document.getElementById('code1').value;
-    const code2 = document.getElementById('code2').value;
-    const code3 = document.getElementById('code3').value;
-    const code4 = document.getElementById('code4').value;
-    const code5 = document.getElementById('code5').value;
-    const code6 = document.getElementById('code6').value;
-
-    const code = code1 + code2 + code3 + code4 + code5 + code6;
-
-    if (code.length !== 6) {
-        showToast('Введите полный код', 'error');
-        return;
-    }
-
-    const email = document.getElementById('verifyEmail').textContent;
-    const loader = document.querySelector('#verifyModal .loader');
-    const btn = document.querySelector('#verifyModal button[type="submit"]');
-    
-    loader.classList.remove('hidden');
-    btn.style.pointerEvents = 'none';
-
-    try {
-        const response = await fetch(`${API_URL}/auth/register/verify`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, code })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            // Завершение регистрации
-            const name = document.getElementById('regName').value.trim();
-            const username = document.getElementById('regUsername').value.trim();
-            const password = document.getElementById('regPassword').value;
-
-            const completeResponse = await fetch(`${API_URL}/auth/register/complete`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, name, username, password })
-            });
-
-            const completeData = await completeResponse.json();
-
-            if (completeResponse.ok) {
-                localStorage.setItem('token', completeData.token);
-                currentUser = completeData.user;
-                
-                document.getElementById('verifyModal').classList.remove('active');
-                showToast('✅ Регистрация завершена!', 'success');
-                
-                setTimeout(() => {
-                    initializeApp();
-                }, 500);
-            } else {
-                showToast('❌ ' + (completeData.error || 'Ошибка завершения регистрации'), 'error');
-            }
-        } else {
-            showToast('❌ ' + (data.error || 'Неверный код'), 'error');
-        }
-    } catch (error) {
-        console.error('❌ Ошибка:', error);
-        showToast('❌ Ошибка соединения с сервером', 'error');
-    } finally {
-        loader.classList.add('hidden');
-        btn.style.pointerEvents = 'auto';
-    }
-}
-
-// Вход
-async function handleLogin(e) {
-    e.preventDefault();
-
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-
-    if (!username || !password) {
-        showToast('Заполните все поля', 'error');
-        return;
-    }
-
-    const loader = document.querySelector('#loginModal .loader');
-    const btn = document.querySelector('#loginModal button[type="submit"]');
-    
-    loader.classList.remove('hidden');
-    btn.style.pointerEvents = 'none';
-
-    try {
-        const response = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            localStorage.setItem('token', data.token);
-            currentUser = data.user;
-            
-            document.getElementById('loginModal').classList.remove('active');
-            showToast('✅ Вход выполнен!', 'success');
-            
-            setTimeout(() => {
-                initializeApp();
-            }, 500);
-        } else {
-            showToast('❌ ' + (data.error || 'Ошибка входа'), 'error');
-        }
-    } catch (error) {
-        console.error('❌ Ошибка:', error);
-        showToast('❌ Ошибка соединения с сервером. Проверьте, что сервер запущен!', 'error');
-    } finally {
-        loader.classList.add('hidden');
-        btn.style.pointerEvents = 'auto';
-    }
-}
-
-// Автоматический переход между полями кода
-function setupCodeInputs() {
-    const inputs = document.querySelectorAll('.code-input');
-    
-    inputs.forEach((input, index) => {
-        input.addEventListener('input', (e) => {
-            if (e.target.value.length === 1 && index < inputs.length - 1) {
-                inputs[index + 1].focus();
-            }
-        });
-
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Backspace' && !e.target.value && index > 0) {
-                inputs[index - 1].focus();
-            }
-        });
-    });
-}
-
-// Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', () => {
-    setupCodeInputs();
-});
+console.log('✅ app.js загружен');
